@@ -1,6 +1,7 @@
 (ns mult-mod.core
   #_(:refer-clojure :exclude (+ - * /))
-  (:require [ubergraph.core :as uber])
+  (:require [ubergraph.core :as uber]
+            [editscript.core :as ediff])
   (:gen-class))
 
 
@@ -109,8 +110,10 @@
 (comment
   ;; visualize graph for a sample group
   (visualize-graph 11)
-  )
 
+  ;; what different between two successive groups?
+  (ediff/diff (:_nodes (graph 5))
+              (:_nodes (graph 6))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; misc
