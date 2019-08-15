@@ -93,12 +93,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; visualizing graphs
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn group->ubergraph [group]
-  (let [graph (graph group)]
-    (apply uber/add-directed-edges
-           (apply uber/multigraph (nodes graph))
-           (for [[start end edge] (edges graph)]
-             [start end {:label (format "*%s" edge)}]))))
+(defn my-graph->ubergraph [graph]
+  (apply uber/add-directed-edges
+         (apply uber/multigraph (nodes graph))
+         (for [[start end edge] (edges graph)]
+           [start end {:label (format "×%s" edge)}])))
+
+(def group->ubergraph
+  (comp my-graph->ubergraph graph))
 
 (def visualize-graph
   (comp uber/viz-graph group->ubergraph))
@@ -113,7 +115,19 @@
 
   ;; what different between two successive groups?
   (ediff/diff (:_nodes (graph 5))
-              (:_nodes (graph 6))))
+              (:_nodes (graph 6)))
+
+  (-> (->> (iterate #((*-mod 17) 9 %) 9)
+           (take 20)
+           (partition 2 1)
+           (map vec)
+           (map #(conj % 7)))
+      create-graph
+      my-graph->ubergraph
+      (uber/viz-graph
+       {:save {:filename "./doc/intro/nine-iteratively-exponentiated-mod-17.png"
+               :format :png}
+        :rankdir :LR})))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; misc
