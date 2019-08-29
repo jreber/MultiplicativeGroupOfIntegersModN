@@ -3,9 +3,10 @@
   :url "http://example.com/FIXME"
   :license {:name "EPL-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0"
             :url "https://www.eclipse.org/legal/epl-2.0/"}
-  :dependencies [[org.clojure/clojure "1.10.0"]
+  :dependencies [[org.clojure/clojure "1.10.1"]
                  [ubergraph "0.7.2"]
-                 [juji/editscript "0.4.0"]]
-  :main ^:skip-aot mult-mod.core
+                 [juji/editscript "0.4.0"]
+                 [loom-gorilla "0.1.0"]]
   :target-path "target/%s"
+  :plugins [[org.clojars.benfb/lein-gorilla "0.6.0"]]
   :profiles {:uberjar {:aot :all}})

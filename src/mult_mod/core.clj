@@ -1,36 +1,11 @@
 (ns mult-mod.core
   #_(:refer-clojure :exclude (+ - * /))
   (:require [ubergraph.core :as uber]
-            [editscript.core :as ediff])
+            [editscript.core :as ediff]
+            [dorothy.core :as dorothy])
+  (:import [java.io ByteArrayInputStream]
+           [javax.imageio ImageIO])
   (:gen-class))
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; graph demo code
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(def airports
-  (-> (uber/multigraph
-        ; city attributes
-        [:Artemis {:population 3000}]
-        [:Balela {:population 2000}]
-        [:Coulton {:population 4000}]
-        [:Dentana {:population 1000}]
-        [:Egglesberg {:population 5000}]
-        ; airline routes
-        [:Artemis :Balela {:color :blue, :airline :CheapAir, :price 200, :distance 40}]
-        [:Artemis :Balela {:color :green, :airline :ThriftyLines, :price 167, :distance 40}]
-        [:Artemis :Coulton {:color :green, :airline :ThriftyLines, :price 235, :distance 120}]
-        [:Artemis :Dentana {:color :blue, :airline :CheapAir, :price 130, :distance 160}]
-        [:Balela :Coulton {:color :green, :airline :ThriftyLines, :price 142, :distance 70}]
-        [:Balela :Egglesberg {:color :blue, :airline :CheapAir, :price 350, :distance 50}])
-    (uber/add-directed-edges
-      [:Dentana :Egglesberg {:color :red, :airline :AirLux, :price 80, :distance 50}]
-      [:Egglesberg :Coulton {:color :red, :airline :AirLux, :price 80, :distance 30}]
-      [:Coulton :Dentana {:color :red, :airline :AirLux, :price 80, :distance 65}])))
-
-
-(uber/pprint airports)
-(uber/viz-graph airports)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -46,20 +21,42 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; define graph algebra and operations
+;; Define graph algebra and operations. Just generic graph abstraction; not
+;; specific to the multiplicative group of integers modulo n.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defprotocol Graph
-  (nodes [this] "Returns the nodes of the graph")
-  (edges [this] "Returns seq of the edges of the graph")
-  (traverse [this node edge] "Returns the node from traversing from node via edge"))
+  (nodes [graph] "Returns the nodes of the graph")
+  (edges [graph] "Returns seq of the edges of the graph")
+  (filter-edges [graph pred] "Returns a new graph containing only those edges (and destination nodse) which satisfy pred")
+  (filter-nodes [graph pred] "Returns a new graph containing only those nodes (and the associated edges) which satisfy pred")
+  (traverse [graph node edge] "Returns the node from traversing from node via edge"))
 
 (defrecord MapGraph [_nodes]
   Graph
-  (nodes [this] (keys _nodes))
-  (edges [this] (for [start (nodes this)
+  (nodes [graph] (keys _nodes))
+  (edges [graph] (for [start (nodes graph)
                       edge (keys (_nodes start))]
-                  [start (traverse this start edge) edge]))
-  (traverse [this node edge] (get-in _nodes [node edge])))
+                  [start (traverse graph start edge) edge]))
+  (filter-edges [graph pred] (->MapGraph
+                              (->> graph
+                                   edges
+                                   (filter (fn [[start end edge]]
+                                             (pred edge)))
+                                   (reduce
+                                    (fn [result [start end edge]]
+                                      (assoc-in result [start edge] end))
+                                    (sorted-map)))))
+  (filter-nodes [graph pred] (->MapGraph
+                              (->> graph
+                                   edges
+                                   (filter (fn [[start end edge]]
+                                             (and (pred start)
+                                                  (pred end))))
+                                   (reduce
+                                    (fn [result [start end edge]]
+                                      (assoc-in result [start edge] end))
+                                    (sorted-map)))))
+  (traverse [graph node edge] (get-in _nodes [node edge])))
 
 (defn create-graph [edges]
   (->MapGraph
@@ -105,29 +102,31 @@
 (def visualize-graph
   (comp uber/viz-graph group->ubergraph))
 
+(defn ubergraph->png
+  "A bit hacky but it got the job done! A hack to change the behavior of
+  this line: https://git.io/fjNWO"
+  ([ubergraph]
+    (ubergraph->png ubergraph nil))
+  ([ubergraph opts]
+   (with-redefs [dorothy.core/show! #(-> %
+                                         (dorothy.core/render {:format :png})
+                                         ByteArrayInputStream.
+                                         ImageIO/read)]
+     (uber/viz-graph ubergraph opts))))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; REPL helpers
+;; misc REPL helpers
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (comment
-  ;; visualize graph for a sample group
-  (visualize-graph 11)
+  (let [mod-base 17
+        multiplier 7]
+    (-> (group->graph mod-base)
+        (filter-edges #{multiplier (- mod-base multiplier)})
+        (filter-nodes #(not= % 0))
+        my-graph->ubergraph
+        (uber/viz-graph {:rankdir :LR}))))
 
-  ;; what different between two successive groups?
-  (ediff/diff (:_nodes (graph 5))
-              (:_nodes (graph 6)))
-
-  (-> (->> (iterate #((*-mod 17) 9 %) 9)
-           (take 20)
-           (partition 2 1)
-           (map vec)
-           (map #(conj % 7)))
-      create-graph
-      my-graph->ubergraph
-      (uber/viz-graph
-       {:save {:filename "./doc/intro/nine-iteratively-exponentiated-mod-17.png"
-               :format :png}
-        :rankdir :LR})))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; misc
