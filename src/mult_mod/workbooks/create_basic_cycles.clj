@@ -1,7 +1,7 @@
 ;; gorilla-repl.fileformat = 1
 
 ;; **
-;;; # Multiplicative Cycles In The Multiplicative Group of Integers Modulo N
+;;; # Creating Cycles In The Multiplicative Group of Integers Modulo N
 ;;; Imagine taking a arbitrary number.
 ;; **
 
@@ -71,8 +71,13 @@
 
 ;; **
 ;;; There it is: take an exponential, apply a modulo operation to it, and get a cycle.
+;; **
+
+;; **
+;;; ## Multiplicative Inverses
+;;; Fun fact, in `modulo 17` land, 7 and 5 are multiplcative inverses of each other; in other words, `5×7=1 modulo 17`. Multiplying by 5 modulo 17 is the same as dividing by 7 modulo 17.
 ;;; 
-;;; Fun fact, in `modulo 17` land, 7 and 5 are multiplcative inverses of each other:
+;;; You can see that in the cycles for 5 and 7: they are the same cycles but reversed.
 ;; **
 
 ;; @@
@@ -91,7 +96,9 @@
 ;; <=
 
 ;; **
-;;; Another fun fact: -7 and -5 (or 10 and 12) are also multiplicative inverses. That makes sense, since the negatives cancel out. (Intruiging follow-up question: If the negative signs cancel, why do they not form the same cycles?)
+;;; Another fun fact: -7 and -5 (or 10 and 12) are also multiplicative inverses. That makes sense, since the negatives cancel out: `5 × 7 = -5 × -7 = 1 modulo 17`.
+;;; 
+;;; (Intruiging follow-up question: If the negative signs cancel, why do they not form the same cycles?)
 ;; **
 
 ;; @@

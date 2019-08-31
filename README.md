@@ -3,6 +3,12 @@
 My investigations into the [multiplicative group of integers modulo
 n](http://mathworld.wolfram.com/ModuloMultiplicationGroup.html)
 
+## Workbook-Based Explorations and Discussions
+
+* [Creating Cycles In The Multiplicative Group of Integers Modulo
+  N](http://viewer.gorilla-repl.org/view.html?source=github&user=jreber&repo=mult-mod&path=src/mult_mod/workbooks/create_basic_cycles.clj)
+
+## Background
 What is the multiplicative group of integers modulo n? To understand
 that, start with an arbitrary number:
 
